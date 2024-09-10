@@ -284,10 +284,25 @@ Langkah-langkah deployement:
 5. Menjalankan ```Project Command``` yang ada pada PWS.
 6. Mengubah branch menjadi ```main``` lagi.
 
-### Alur request dan response dalam aplikasi Django
+### 2. Alur request dan response dalam aplikasi Django
+![IMG_0155](https://github.com/user-attachments/assets/154dde39-6057-47cb-878f-d241bf75d0be)
+Penjelasan:
+1. Client mengirim request.
+2. Django memproses request dan mencari pola URL yang cocok di urls.py.
+3. urls.py mengarahkan request ke fungsi view yang sesuai di views.py.
+4. views.py memproses request dan berinteraksi dengan models.py jika perlu mengakses data.
+5. views.py memilih template HTML yang sesuai dan merender-nya dengan data.
+6. Template HTML dirender menjadi respons.
+7. Respons dikirimkan ke client.
 
+### 3.  Fungsi git dalam pengembangan perangkat lunak
+Sebagai Version Control, git dapat melacak perubahan dalam kode dari waktu ke waktu, di mana pengembang dapat melihat riwayat perubahan dan kembali ke versi sebelumnya jika diperlukan. Fitur clone repositori dapat menjadi back up dari proyek. Dengan git, pengembang dapat menggunggah kode ke situs layanan repositori git, contohnya adalah github. Git sangat berguna dalam kolaborasi. Fitur branch dapat memfasilitasi kerja sama antar anggota tim. Branch memungkinkan para pengembang mengerjakan proyek secara bersamaan pada branch yang terpisah dari branch utama. Selain itu, branch juga berguna untuk mengembangkan fitur atau bereksperimen tanpa takut merusak kode pada branch utama. Selain itu, terdapat merge yang memudahkan penggabungan perubahan, fitur, dll untuk dikembalikan ke branch utama. Dengan demikian, git dapat mengurangi konflik kode dan memudahkan resolusi ketika konflik terjadi.
    
-    
+### 4. Alasan framework Django dijadikan permulaan pembelajaran pengembangan perangkat lunak
+Django menggunakan python, di mana bahasa yang sudah sangat familiar dan beginner friendly. Django merupakan open source framework yang berarti kita dapat mengakses sumbernya secara bebas dan dapat berkontribusi tanpa ada biaya lisensi. Django memiliki banyak fitur built-in di mana dapat memudahkan kita dalam membangun aplikasi web dengan cepat tanpa harus membuat dari "scratch", salah satunya ORM. Django juga menyediakan fitur-fitur keamanan yang melindungin pengembang dari serangan. Selain fitur-fitur bawaannya yang banyak, Django juga sangat cepat dan memiliki kemampuan untuk menangani lalu lintas tinggi dengan baik. Django sudah memiliki komunitas yang besar, sehingga memudahkan kita dalam bekerja sama, menangani problem, dlll. Django memiliki arsitektur MTV yang memudahkan kita sebagai pengembang untuk mengerjakan proyek dengan rapih dan terstruktur. Yang terakhir, django sudah banyak dipakai di industri yang membuktikan bahwa django merupakan framework yang terpercaya.
+
+### 5. Alasan model pada Django disebut sebagai ORM
+Model dalam Django disebut sebagai ORM (Object-Relational Mapping) karena fungsinya yang memetakan objek Python ke tabel database. Dengan menggunakan model Django, struktur data dapat didefinisikan melalui kelas Python, di mana setiap kelas model merepresentasikan sebuah tabel database. ORM ini menyediakan lapisan abstraksi antara kode Python dan database, memungkinkan interaksi dengan database menggunakan sintaks Python tanpa perlu menulis SQL secara langsung. Keuntungan lainnya adalah kode yang ditulis menjadi lebih fleksibel dan tidak terikat pada sistem database tertentu, sehingga dapat bekerja dengan berbagai database seperti PostgreSQL, MySQL, SQLite, dan sebagainya. Selain itu, Django ORM juga mendukung manajemen skema otomatis, yang berarti dapat secara otomatis membuat, mengubah, dan menghapus tabel database berdasarkan definisi model. Dengan Query API, ORM memudahkan pelaksanaan operasi database kompleks melalui metode Python, tanpa memerlukan raw SQL. 
     
     
    
