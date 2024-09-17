@@ -304,6 +304,203 @@ Django menggunakan python, di mana bahasa yang sudah sangat familiar dan beginne
 ### 5. Alasan model pada Django disebut sebagai ORM
 Model dalam Django disebut sebagai ORM (Object-Relational Mapping) karena fungsinya yang memetakan objek Python ke tabel database. Dengan menggunakan model Django, struktur data dapat didefinisikan melalui kelas Python, di mana setiap kelas model merepresentasikan sebuah tabel database. ORM ini menyediakan lapisan abstraksi antara kode Python dan database, memungkinkan interaksi dengan database menggunakan sintaks Python tanpa perlu menulis SQL secara langsung. Keuntungan lainnya adalah kode yang ditulis menjadi lebih fleksibel dan tidak terikat pada sistem database tertentu, sehingga dapat bekerja dengan berbagai database seperti PostgreSQL, MySQL, SQLite, dan sebagainya. Selain itu, Django ORM juga mendukung manajemen skema otomatis, yang berarti dapat secara otomatis membuat, mengubah, dan menghapus tabel database berdasarkan definisi model. Dengan Query API, ORM memudahkan pelaksanaan operasi database kompleks melalui metode Python, tanpa memerlukan raw SQL. 
     
+
+## Tugas 2
+### Langkah-langkah implementasi form 
+1. Sebelum membuat form, pastikan model ```Product``` menggunakan UUID sebagai primary key untuk menggantikan primary key berupa integer yang secara default auto-increment. Lalu, run ```python manage.py makemigrations``` dan ```python manage.py migrate```.
+   
+    ```python
+   import uuid
+   from django.db import models
+   
+   class Product(models.Model):
+       id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+       ...
+    ```
+2. Membuat Django form untuk ```Product``` model dengan membuat ```forms.py``` di dalam direktori ```main```.
+   
+   ```python
+   from django import forms
+   from .models import Product
+   
+   class ProductForm(forms.ModelForm):
+       class Meta:
+           model = Product
+           fields = ['name', 'author', 'description', 'stock_quantity', 'price']
+    ```
+3. Membuat method ```create_product``` untuk handle pembuatan produk baru ke dalam database.
+   
+   ```python
+   def create_product(request):
+       form = ProductForm(request.POST or None)
+   
+       if form.is_valid() and request.method == "POST":
+           form.save()
+           return redirect('main:show_main')
+   
+       context = {'form': form}
+       return render(request, "create_product.html", context)
+    ```
+4.  Untuk menggunakan views di atas, update ```urls.py``` di ```main``` untuk memasukan ```path``` untuk view di atas.
+      ```python
+         urlpatterns = [
+             ...
+             path('create_product/', create_product, name='create_product'),
+             ...
+         ]
+      ```
+6. Selanjutnya, buat template yang dibutuhkan, yaitu ```create_product.html``` dalam ```templates``` di direktori ```main```.
+      ```html
+      {% extends 'base.html' %}
+      
+      {% block meta %}
+      <title>Add New Product - Booktique</title>
+      {% endblock meta %}
+      
+      {% block content %}
+      <h1>Add New Product</h1>
+      
+      <form method="POST">
+          {% csrf_token %}
+          <table>
+              {{ form.as_table }}
+              <tr>
+                  <td></td>
+                  <td>
+                      <input type="submit" value="Add Product"/>
+                  </td>
+              </tr>
+          </table>
+      </form>
+      
+      <br />
+      
+      <a href="{% url 'main:show_main' %}">
+          <button>Back to Product List</button>
+      </a>
+      
+      {% endblock content %}
+   ```
+   
+7. Sebelumnya, buat dahulu direktori ```templates``` di direktori utama dan tambahkan ```base.html```.
+   
+   ```html
+   {% load static %}
+   <!DOCTYPE html>
+   <html lang="en">
+     <head>
+       <meta charset="UTF-8" />
+       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+       {% block meta %} {% endblock meta %}
+     </head>
+   
+     <body>
+       {% block content %} {% endblock content %}
+     </body>
+   </html>
+   ```
+8. Menambahkan lokasi direktori tersebut ke dalam ```settings.py``` di direktori ```booktique```.
+   
+   ```python
+      ...
+      'DIRS': [BASE_DIR / 'templates'],
+      ...
+   ```
+   
+9. Mengedit template ```main.html``` (ekstensi dari ```base.html```) untuk menampilkan daftar produk pada aplikasi Booktique dan menampilkan informasi produk dalam tabel, serta menyediakan tombol untuk menambahkan produk baru.
+   ```html
+   {% extends 'base.html' %}
+   
+   {% block meta %}
+   <title>Booktique - Product List</title>
+   {% endblock meta %}
+   
+   {% block content %}
+   <h1>Booktique</h1>
+   
+   <h5>Name:</h5>
+   <p>{{ name }}</p>
+   
+   <h5>Class:</h5>
+   <p>{{ class }}</p>
+   
+   {% if not products %}
+   <p>No products available in Booktique.</p>
+   {% else %}
+   <table>
+     <tr>
+       <th>Name</th>
+       <th>Author</th>
+       <th>Description</th>
+       <th>Stock Quantity</th>
+       <th>Price</th>
+     </tr>
+   
+     {% for product in products %}
+     <tr>
+       <td>{{product.name}}</td>
+       <td>{{product.author}}</td>
+       <td>{{product.description}}</td>
+       <td>{{product.stock_quantity}}</td>
+       <td>{{product.price}}</td>
+     </tr>
+     {% endfor %}
+   </table>
+   {% endif %}
+   
+   <br />
+   
+   <a href="{% url 'main:create_product' %}">
+     <button>Add New Product</button>
+   </a>
+   
+   {% endblock content %}
+   ```
+10. Menambahkan 4 fungsi ```views``` untuk menampilkan data produk dalam format XML atau JSON, baik untuk semua produk maupun produk berdasarkan ID tertentu.
     
-   
-   
+    ```python
+      def show_xml(request):
+          data = Product.objects.all()
+          return HttpResponse(serializers.serialize("xml", data), content_type="application/xml")
+      
+      def show_json(request):
+          data = Product.objects.all()
+          return HttpResponse(serializers.serialize("json", data), content_type="application/json")
+      
+      def show_xml_by_id(request, id):
+          data = Product.objects.filter(pk=id)
+          return HttpResponse(serializers.serialize("xml", data), content_type="application/xml")
+      
+      def show_json_by_id(request, id):
+          data = Product.objects.filter(pk=id)
+          return HttpResponse(serializers.serialize("json", data), content_type="application/json")
+    ```
+11. Menambahkan route di ```urls.py``` di ```main``` untuk mengakses fungsi show_xml, show_json, show_xml_by_id, dan show_json_by_id agar data dapat diambil dalam format XML atau JSON sesuai kebutuhan.
+
+    ```python
+      urlpatterns = [
+          ...
+          path('xml/', show_xml, name='show_xml'),
+          path('json/', show_json, name='show_json'),
+          path('xml/<uuid:id>/', show_xml_by_id, name='show_xml_by_id'),
+          path('json/<uuid:id>/', show_json_by_id, name='show_json_by_id'),
+      ]
+    ```
+12.  Menguji aplikasi Django secara langsung di browser dengan alamat default  ```http://127.0.0.1:8000/```dengan run ```python manage.py runserver```.
+### Jawaban pertanyaan
+#### 1. Jelaskan mengapa kita memerlukan data delivery dalam pengimplementasian sebuah platform?
+Data delivery itu penting banget dalam implementasi platform karena pada dasarnya, platform apapun pasti melibatkan pertukaran data antara client dan server. Data delivery memastikan bahwa data yang dikirim dan diterima tepat waktu, akurat, dan bisa diakses dengan lancar. Bayangin aja kalau nggak ada mekanisme pengiriman data yang bagus, pasti platform-nya jadi lambat, error terus, atau malah nggak jalan sama sekali. Jadi, data delivery itu kunci untuk memastikan user experience tetap mulus.
+#### 2. Menurutmu, mana yang lebih baik antara XML dan JSON? Mengapa JSON lebih populer dibandingkan XML?
+Menurutku, kalau dibandingin XML sama JSON, JSON lebih populer karena lebih simpel dan efisien. JSON itu lebih ringkas, gampang dibaca manusia dan lebih mudah di-parse oleh komputer. Sedangkan, XML lebih verbose (lebih banyak tag) dan cenderung bikin file lebih besar. Jadi, buat aplikasi modern yang butuh proses cepat dan ringan, JSON lebih cocok. Apalagi sekarang banyak framework yang udah native support JSON, makanya dia jadi lebih populer.
+#### 3. Jelaskan fungsi dari method is_valid() pada form Django dan mengapa kita membutuhkan method tersebut?
+`is_valid()` di Django itu buat ngecek apakah data yang diisi di form udah sesuai aturan (validasi) yang kita tentukan. Jadi, sebelum kita proses data form lebih lanjut (kayak disimpan ke database), kita cek dulu pake `is_valid()` biar pastiin nggak ada data yang salah format atau nggak sesuai. Kalau nggak ada validasi ini, bisa-bisa data yang disimpan berantakan, yang tentu bisa bikin error di aplikasi kita.
+#### 4. Mengapa kita membutuhkan csrf_token saat membuat form di Django? Apa yang dapat terjadi jika kita tidak menambahkan csrf_token pada form Django? Bagaimana hal tersebut dapat dimanfaatkan oleh penyerang?
+`csrf_token` penting banget di Django buat ngelindungin aplikasi dari serangan CSRF (Cross-Site Request Forgery). CSRF itu serangan di mana penyerang bisa ngerjain request jahat atas nama user tanpa sepengetahuan mereka, misalnya transfer uang atau hapus data penting. Nah, `csrf_token` ini mencegah hal itu dengan nge-verify setiap form submission berasal dari user yang sah (bukan penyerang). Kalau kita nggak pake `csrf_token`, penyerang bisa manfaatin celah ini buat ngejalanin aksi jahat dengan menyamar sebagai user kita. Jadi, token ini semacam pelindung biar aplikasi kita aman dari manipulasi.
+
+
+
+
+
+
+    
+     
