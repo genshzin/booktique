@@ -306,7 +306,17 @@ Model dalam Django disebut sebagai ORM (Object-Relational Mapping) karena fungsi
     
 
 ## Tugas 2
-### Langkah-langkah implementasi form 
+### Jawaban pertanyaan
+#### 1. Jelaskan mengapa kita memerlukan data delivery dalam pengimplementasian sebuah platform?
+Data delivery itu penting banget dalam implementasi platform karena pada dasarnya, platform apapun pasti melibatkan pertukaran data antara client dan server. Data delivery memastikan bahwa data yang dikirim dan diterima tepat waktu, akurat, dan bisa diakses dengan lancar. Bayangin aja kalau nggak ada mekanisme pengiriman data yang bagus, pasti platform-nya jadi lambat, error terus, atau malah nggak jalan sama sekali. Jadi, data delivery itu kunci untuk memastikan user experience tetap mulus.
+#### 2. Menurutmu, mana yang lebih baik antara XML dan JSON? Mengapa JSON lebih populer dibandingkan XML?
+Menurutku, kalau dibandingin XML sama JSON, JSON lebih populer karena lebih simpel dan efisien. JSON itu lebih ringkas, gampang dibaca manusia dan lebih mudah di-parse oleh komputer. Sedangkan, XML lebih verbose (lebih banyak tag) dan cenderung bikin file lebih besar. Jadi, buat aplikasi modern yang butuh proses cepat dan ringan, JSON lebih cocok. Apalagi sekarang banyak framework yang udah native support JSON, makanya dia jadi lebih populer.
+#### 3. Jelaskan fungsi dari method is_valid() pada form Django dan mengapa kita membutuhkan method tersebut?
+`is_valid()` di Django itu buat ngecek apakah data yang diisi di form udah sesuai aturan (validasi) yang kita tentukan. Jadi, sebelum kita proses data form lebih lanjut (kayak disimpan ke database), kita cek dulu pake `is_valid()` biar pastiin nggak ada data yang salah format atau nggak sesuai. Kalau nggak ada validasi ini, bisa-bisa data yang disimpan berantakan, yang tentu bisa bikin error di aplikasi kita.
+#### 4. Mengapa kita membutuhkan csrf_token saat membuat form di Django? Apa yang dapat terjadi jika kita tidak menambahkan csrf_token pada form Django? Bagaimana hal tersebut dapat dimanfaatkan oleh penyerang?
+`csrf_token` penting banget di Django buat ngelindungin aplikasi dari serangan CSRF (Cross-Site Request Forgery). CSRF itu serangan di mana penyerang bisa ngerjain request jahat atas nama user tanpa sepengetahuan mereka, misalnya transfer uang atau hapus data penting. Nah, `csrf_token` ini mencegah hal itu dengan nge-verify setiap form submission berasal dari user yang sah (bukan penyerang). Kalau kita nggak pake `csrf_token`, penyerang bisa manfaatin celah ini buat ngejalanin aksi jahat dengan menyamar sebagai user kita. Jadi, token ini semacam pelindung biar aplikasi kita aman dari manipulasi.
+
+#### 5. Langkah-langkah implementasi form 
 1. Sebelum membuat form, pastikan model ```Product``` menggunakan UUID sebagai primary key untuk menggantikan primary key berupa integer yang secara default auto-increment. Lalu, run ```python manage.py makemigrations``` dan ```python manage.py migrate```.
    
     ```python
@@ -487,15 +497,24 @@ Model dalam Django disebut sebagai ORM (Object-Relational Mapping) karena fungsi
       ]
     ```
 12.  Menguji aplikasi Django secara langsung di browser dengan alamat default  ```http://127.0.0.1:8000/```dengan run ```python manage.py runserver```.
-### Jawaban pertanyaan
-#### 1. Jelaskan mengapa kita memerlukan data delivery dalam pengimplementasian sebuah platform?
-Data delivery itu penting banget dalam implementasi platform karena pada dasarnya, platform apapun pasti melibatkan pertukaran data antara client dan server. Data delivery memastikan bahwa data yang dikirim dan diterima tepat waktu, akurat, dan bisa diakses dengan lancar. Bayangin aja kalau nggak ada mekanisme pengiriman data yang bagus, pasti platform-nya jadi lambat, error terus, atau malah nggak jalan sama sekali. Jadi, data delivery itu kunci untuk memastikan user experience tetap mulus.
-#### 2. Menurutmu, mana yang lebih baik antara XML dan JSON? Mengapa JSON lebih populer dibandingkan XML?
-Menurutku, kalau dibandingin XML sama JSON, JSON lebih populer karena lebih simpel dan efisien. JSON itu lebih ringkas, gampang dibaca manusia dan lebih mudah di-parse oleh komputer. Sedangkan, XML lebih verbose (lebih banyak tag) dan cenderung bikin file lebih besar. Jadi, buat aplikasi modern yang butuh proses cepat dan ringan, JSON lebih cocok. Apalagi sekarang banyak framework yang udah native support JSON, makanya dia jadi lebih populer.
-#### 3. Jelaskan fungsi dari method is_valid() pada form Django dan mengapa kita membutuhkan method tersebut?
-`is_valid()` di Django itu buat ngecek apakah data yang diisi di form udah sesuai aturan (validasi) yang kita tentukan. Jadi, sebelum kita proses data form lebih lanjut (kayak disimpan ke database), kita cek dulu pake `is_valid()` biar pastiin nggak ada data yang salah format atau nggak sesuai. Kalau nggak ada validasi ini, bisa-bisa data yang disimpan berantakan, yang tentu bisa bikin error di aplikasi kita.
-#### 4. Mengapa kita membutuhkan csrf_token saat membuat form di Django? Apa yang dapat terjadi jika kita tidak menambahkan csrf_token pada form Django? Bagaimana hal tersebut dapat dimanfaatkan oleh penyerang?
-`csrf_token` penting banget di Django buat ngelindungin aplikasi dari serangan CSRF (Cross-Site Request Forgery). CSRF itu serangan di mana penyerang bisa ngerjain request jahat atas nama user tanpa sepengetahuan mereka, misalnya transfer uang atau hapus data penting. Nah, `csrf_token` ini mencegah hal itu dengan nge-verify setiap form submission berasal dari user yang sah (bukan penyerang). Kalau kita nggak pake `csrf_token`, penyerang bisa manfaatin celah ini buat ngejalanin aksi jahat dengan menyamar sebagai user kita. Jadi, token ini semacam pelindung biar aplikasi kita aman dari manipulasi.
+
+#### Screenshots postman
+##### 1. XML
+![Screenshot (354)](https://github.com/user-attachments/assets/67c97e45-5e16-4cc4-bb5e-388e65aa1e47)
+
+##### 2. XML by ID
+![Screenshot (355)](https://github.com/user-attachments/assets/93ae1524-09ee-4bf9-a7d3-34c671b9b03e)
+
+##### 3. JSON
+![Screenshot (356)](https://github.com/user-attachments/assets/caea1908-b584-4b09-a450-9a1049572e89)
+
+##### 4. JSON by ID
+![Screenshot (357)](https://github.com/user-attachments/assets/eb414af9-67cd-44b2-8886-4b88fcd4d86e)
+
+
+
+
+
 
 
 
