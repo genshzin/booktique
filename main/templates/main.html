@@ -7,6 +7,9 @@
 {% block content %}
 <h1>Booktique</h1>
 
+<h5>NPM: </h5>
+<p>{{ npm }}<p>
+
 <h5>Name:</h5>
 <p>{{ name }}</p>
 
@@ -42,5 +45,9 @@
 <a href="{% url 'main:create_product' %}">
   <button>Add New Product</button>
 </a>
+<a href="{% url 'main:login' %}">
+  <button>Logout</button>
+</a>
+<h5>Sesi terakhir login: {{ last_login }}</h5>
 
 {% endblock content %}
