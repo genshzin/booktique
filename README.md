@@ -305,7 +305,7 @@ Django menggunakan python, di mana bahasa yang sudah sangat familiar dan beginne
 Model dalam Django disebut sebagai ORM (Object-Relational Mapping) karena fungsinya yang memetakan objek Python ke tabel database. Dengan menggunakan model Django, struktur data dapat didefinisikan melalui kelas Python, di mana setiap kelas model merepresentasikan sebuah tabel database. ORM ini menyediakan lapisan abstraksi antara kode Python dan database, memungkinkan interaksi dengan database menggunakan sintaks Python tanpa perlu menulis SQL secara langsung. Keuntungan lainnya adalah kode yang ditulis menjadi lebih fleksibel dan tidak terikat pada sistem database tertentu, sehingga dapat bekerja dengan berbagai database seperti PostgreSQL, MySQL, SQLite, dan sebagainya. Selain itu, Django ORM juga mendukung manajemen skema otomatis, yang berarti dapat secara otomatis membuat, mengubah, dan menghapus tabel database berdasarkan definisi model. Dengan Query API, ORM memudahkan pelaksanaan operasi database kompleks melalui metode Python, tanpa memerlukan raw SQL. 
     
 
-## Tugas 2
+## Tugas 3
 ### Jawaban pertanyaan
 #### 1. Jelaskan mengapa kita memerlukan data delivery dalam pengimplementasian sebuah platform?
 Data delivery itu memiliki peran penting dalam implementasi platform karena pada dasarnya, platform apapun pasti ada pertukaran data antara client dan server. Data delivery membuat data yang dikirim dan diterima jadi tepat waktu, akurat, dan bisa diakses dengan lancar. Bayangin saja kalau tidak ada mekanisme pengiriman data yang bagus, pasti platform-nya jadi lambat, error terus, atau malah tidak jalan sama sekali. Jadi, data delivery itu kunci untuk memastikan user experience tetap lancar.
@@ -511,7 +511,238 @@ Menurutku, kalau dibandingin XML sama JSON, JSON lebih populer karena lebih simp
 ##### 4. JSON by ID
 ![Screenshot (357)](https://github.com/user-attachments/assets/eb414af9-67cd-44b2-8886-4b88fcd4d86e)
 
+## Tugas 4
+### Apa perbedaan antara HttpResponseRedirect() dan redirect()
 
+- **`HttpResponseRedirect()`**:
+Ini adalah fungsi bawaan Django yang gunanya untuk melakukan redirect (pengalihan) dari satu URL ke URL lain. Jadi, ini bisa arahkan user dari halaman A ke halaman B. Tapi, untuk pakai ini, kita harus kasih URL secara manual. Contohnya:  
+  ```python
+  from django.http import HttpResponseRedirect
+  return HttpResponseRedirect('/home/')
+  ```
+
+- **`redirect()`**
+Nah, ini versi lebih simpel dan "upgrade" dari `HttpResponseRedirect()`. Dengan `redirect()`, kita bisa langsung kasih URL, nama view, atau bahkan objek, dan Django bakal otomatis tahu ke mana harus diarahkan. Jadi lebih fleksibel. Contohnya:  
+  ```python
+  from django.shortcuts import redirect
+  return redirect('home')
+  ```
+
+### Jelaskan cara kerja penghubungan model Product dengan User!
+Di Django, biasanya model `Product` bisa dihubungkan ke `User` (pengguna) menggunakan **ForeignKey**. Misalnya, kita mau tiap produk punya pemilik atau creator yang berasal dari `User`. Caranya, di model `Product`, kita tinggal tambahkan field `ForeignKey` yang merujuk ke model `User`. Contohnya:
+
+```python
+from django.contrib.auth.models import User
+
+class Product(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+```
+
+Jadi, setiap produk bakal punya satu user. `on_delete=models.CASCADE` berarti kalau pengguna dihapus, produk yang dia buat juga bakal dihapus.
+
+
+### Apa perbedaan antara authentication dan authorization, apakah yang dilakukan saat pengguna login? Jelaskan bagaimana Django mengimplementasikan kedua konsep tersebut.
+
+- Authentication: Ini kayak ngecek "Lu siapa sih?" Pas login, Django ngecek username sama password benar atau tidak.
+- Authorization: Nah kalo ini lebih ke "Lu boleh ngapain aja?" Misal, cuma admin yang boleh hapus post.
+
+Django punya system bawaan buat dua-duanya. Pas login, dia ngelakuin authentication dulu. Abis itu, dia bisa pake decorators kayak `@login_required` atau `@permission_required` buat authorization.
+Pas pengguna login, yang dilakukan Django adalah **authentication** dulu. Jika autentikasi berhasil, baru si pengguna itu dapat **authorization** berdasarkan peran atau izin yang dia punya.
+
+### Bagaimana Django mengingat pengguna yang telah login? Jelaskan kegunaan lain dari cookies dan apakah semua cookies aman digunakan?
+Django pake session buat ini. Intinya, pas login berhasil, Django nyimpen info user di session (yang disimpen di database atau cache). Terus dia ngirim cookie ke browser yang isinya session ID. Setiap kali user kirim request baru, session ID itu dicek, dan Django tahu siapa user-nya tanpa harus login lagi.
+
+#### Kegunaan lain dari cookies dan apakah semua cookies aman digunakan?
+ Selain buat session, cookies juga bisa dipakai buat banyak hal lain, misalnya:
+  - Mengingat preferensi pengguna: Seperti bahasa yang dipilih atau tema warna.
+  - Melacak aktivitas pengguna: Ini sering dipakai di website e-commerce buat nge-track barang apa yang pernah dilihat atau dimasukkan ke keranjang.
+
+ **Apakah semua cookies aman digunakan?**
+Gak semua cookies aman. Cookies bisa berisi data sensitif, jadi ada risiko kalau gak di-manage dengan benar. Ada juga yang namanya "third-party cookies" yang bisa dipake buat tracking lintas situs, makanya banyak browser mulai ngeblok ini. Hati-hati juga dengan cookies yang disimpan terlalu lama, karena bisa jadi sasaran bagi hacker buat eksploitasi.
+Intinya, hati-hati aja sama data sensitif di cookies. Kalo mau aman, encrypt dulu atau mending simpen di server aja sekalian.
+
+### Langkah-langkah implementasi
+1. Membuat fungsi register, login, dan logout pada ```views.py``` di direktori ```main```.
+
+    ```python
+   def register(request):
+    form = UserCreationForm()
+
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your account has been successfully created!')
+            return redirect('main:login')
+    context = {'form':form}
+    return render(request, 'register.html', context)
+
+   def login_user(request):
+      if request.method == 'POST':
+         form = AuthenticationForm(data=request.POST)
+   
+         if form.is_valid():
+               user = form.get_user()
+               login(request, user)
+               return redirect('main:show_main')
+   
+      else:
+         form = AuthenticationForm(request)
+      context = {'form': form}
+      return render(request, 'login.html', context)
+   
+   def logout_user(request):
+       logout(request)
+       return redirect('main:login')
+   ```
+3. Melakukan routing url pada ```urls.py``` di direktori ```main``` untuk mengarahkan ke fungsi yang sudah dibuat.
+   
+   ```python
+   urlpatterns = [
+    ...
+    path('register/', register, name='register'),
+    path('login/', login_user, name='login'),
+    path('logout/', logout_user, name='logout')
+   ]
+   ```
+4. Menyesuaikan file html yang dibutuhkan seperti membuat ```register.html.``` dan ```login.html``` serta memodifikasi ```main.html``` untuk logout pada direktori ```main/templates```
+  
+   ```login.html```:
+   ```html
+   {% extends 'base.html' %}
+   
+   {% block meta %}
+   <title>Login</title>
+   {% endblock meta %}
+   
+   {% block content %}
+   <div class="login">
+     <h1>Login</h1>
+   
+     <form method="POST" action="">
+       {% csrf_token %}
+       <table>
+         {{ form.as_table }}
+         <tr>
+           <td></td>
+           <td><input class="btn login_btn" type="submit" value="Login" /></td>
+         </tr>
+       </table>
+     </form>
+   
+     {% if messages %}
+     <ul>
+       {% for message in messages %}
+       <li>{{ message }}</li>
+       {% endfor %}
+     </ul>
+     {% endif %} Don't have an account yet?
+     <a href="{% url 'main:register' %}">Register Now</a>
+   </div>
+   
+   {% endblock content %}
+   ```
+   ```register.html```:
+   ```html
+   {% extends 'base.html' %}
+   
+   {% block meta %}
+   <title>Register</title>
+   {% endblock meta %}
+   
+   {% block content %}
+   
+   <div class="login">
+     <h1>Register</h1>
+   
+     <form method="POST">
+       {% csrf_token %}
+       <table>
+         {{ form.as_table }}
+         <tr>
+           <td></td>
+           <td><input type="submit" name="submit" value="Daftar" /></td>
+         </tr>
+       </table>
+     </form>
+   
+     {% if messages %}
+     <ul>
+       {% for message in messages %}
+       <li>{{ message }}</li>
+       {% endfor %}
+     </ul>
+     {% endif %}
+   </div>
+   
+   {% endblock content %}{% extends 'base.html' %}
+   ```
+   
+   ```main.html```:
+   
+   ```html
+   <a href="{% url 'main:create_product' %}">
+     <button>Add New Product</button>
+   </a>
+   <a href="{% url 'main:login' %}">
+     <button>Logout</button>
+   </a>
+   ```
+5. Menambahkan decorator  ```login_required``` di ```views.py``` pada ```show_main``` sebagai laman utama untuk autentikasi login, yaitu mengharuskan login dulu untuk mengaksesnya. 
+   ```python
+   from django.contrib.auth.decorators import login_required
+
+   @login_required(login_url='/login')
+   def show_main(request):
+   ```
+6. Menerapkan cookies untuk menyimpan data user saat login pada beberapa fungsi di ```views.py```. Sebelumnya mengimport beberapa yang dibutuhkan seperti HttpResponseRedirect, reverse, dan datetime.
+   ```python
+   def show_main(request):
+    products = Product.objects.filter(user=request.user)
+
+    context = {
+        'name': request.user.username,
+        'class': 'PBP B',
+        'npm': '2306165553',
+        'products': products,
+        'last_login': request.COOKIES['last_login']
+    }
+
+    return render(request, "main.html", context)
+   
+   ...
+   def login_user(request):
+   if request.method == 'POST':
+      form = AuthenticationForm(data=request.POST)
+
+      if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            response = HttpResponseRedirect(reverse('main:show_main'))
+            response.set_cookie('last_login', str(datetime.datetime.now()))
+            return response
+
+   else:
+      form = AuthenticationForm(request)
+   context = {'form': form}
+   return render(request, 'login.html', context)
+
+   def logout_user(request):
+       logout(request)
+       response = HttpResponseRedirect(reverse('main:login'))
+       response.delete_cookie('last_login')
+       return response
+   ```
+7. Menghubungan model ```Product``` dengan``` user``` menggunakan field `ForeignKey` yang merujuk ke model `User`
+      ```python
+      from django.contrib.auth.models import User
+
+      class Product(models.Model):
+          user = models.ForeignKey(User, on_delete=models.CASCADE)
+      ```
+8. Melakukan migrasi database menggunakan ```python manage.py makemigrations``` dan ```python manage.py migrate```
+   
+    
 
 
 
