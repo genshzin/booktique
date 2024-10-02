@@ -1,53 +1,63 @@
 {% extends 'base.html' %}
 
+{% load static %}
+
 {% block meta %}
 <title>Booktique - Product List</title>
 {% endblock meta %}
 
 {% block content %}
-<h1>Booktique</h1>
+{% include 'navbar.html' %}
+<div class="container mx-auto p-6">
 
-<h5>NPM: </h5>
-<p>{{ npm }}<p>
+    <!-- ID Card -->
+    <div class="grid grid-cols-1 gap-6 mb-6">
+        {% include "card_info.html" with name=name npm=npm class=class last_login=last_login %}
+    </div>
 
-<h5>Name:</h5>
-<p>{{ name }}</p>
+    <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+        <!-- Sort dropdown & button -->
+        <form method="get" action="" class="flex flex-col md:flex-row items-center mb-4 md:mb-0">
+            <label for="sort-field" class="mr-2">Sort By</label>
+            <select id="sort-field" name="sort" class="border border-gray-300 rounded-lg p-2 mb-2 md:mb-0 md:mr-4" required>
+                <option value="">Select</option>
+                <option value="name">Name</option>
+                <option value="price">Price</option>
+                <option value="stock">Stock</option>
+            </select>
+        
+            <label for="sort-order" class="ml-4 mr-2">Order</label>
+            <select id="sort-order" name="order" class="border border-gray-300 rounded-lg p-2 mb-2 md:mb-0" required>
+                <option value="">Select</option>
+                <option value="asc">Ascending</option>
+                <option value="desc">Descending</option>
+            </select>
+        
+            <button type="submit" class="ml-4 text-white font-bold py-2 px-4 rounded-full transition duration-300 ease-in-out bg-blue-950 hover:bg-slate-900">
+                Sort
+            </button>
+        </form>
+        
 
-<h5>Class:</h5>
-<p>{{ class }}</p>
+        <a href="{% url 'main:create_product' %}" class="text-white font-bold py-2 px-4 rounded-full transition duration-300 ease-in-out bg-blue-950 hover:bg-slate-900">
+            Add New Product
+        </a>
+    </div>
 
-{% if not products %}
-<p>No products available in Booktique.</p>
-{% else %}
-<table>
-  <tr>
-    <th>Name</th>
-    <th>Author</th>
-    <th>Description</th>
-    <th>Stock Quantity</th>
-    <th>Price</th>
-  </tr>
-
-  {% for product in products %}
-  <tr>
-    <td>{{product.name}}</td>
-    <td>{{product.author}}</td>
-    <td>{{product.description}}</td>
-    <td>{{product.stock_quantity}}</td>
-    <td>{{product.price}}</td>
-  </tr>
-  {% endfor %}
-</table>
-{% endif %}
-
-<br />
-
-<a href="{% url 'main:create_product' %}">
-  <button>Add New Product</button>
-</a>
-<a href="{% url 'main:login' %}">
-  <button>Logout</button>
-</a>
-<h5>Sesi terakhir login: {{ last_login }}</h5>
-
+    <!-- product card -->
+    {% if not products %}
+        <div class="flex flex-col items-center justify-center">
+            <img src="{% static 'image/sedih-banget.png' %}" alt="Sad face" class="w-24 h-24 mb-2"/>
+            <p>No products available in Booktique :[ </p>
+        </div>
+    {% else %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {% for product in products %}
+            <div class="flex justify-center"> 
+                {% include 'card_product.html' with product=product %}
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
 {% endblock content %}

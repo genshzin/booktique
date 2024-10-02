@@ -14,15 +14,38 @@ from django.urls import reverse
 def show_main(request):
     products = Product.objects.filter(user=request.user)
 
+    # Mengambil query pencarian dari parameter GET
+    query = request.GET.get('query', '')
+    if query:
+        products = products.filter(name__icontains=query)  # Filter berdasarkan nama produk
+
+    # Mengambil parameter sort dan order dari URL
+    sort_by = request.GET.get('sort', '')
+    order = request.GET.get('order', '')
+
+    # Mengurutkan produk hanya jika kedua dropdown terpilih
+    if sort_by and order:
+        if sort_by == 'name':
+            products = products.order_by('name' if order == 'asc' else '-name')
+        elif sort_by == 'price':
+            products = products.order_by('price' if order == 'asc' else '-price')
+        elif sort_by == 'stock':
+            products = products.order_by('stock_quantity' if order == 'asc' else '-stock_quantity')
+
     context = {
         'name': request.user.username,
         'class': 'PBP B',
         'npm': '2306165553',
         'products': products,
-        'last_login': request.COOKIES['last_login']
+        'last_login': request.COOKIES.get('last_login', 'Never'),
     }
 
     return render(request, "main.html", context)
+
+
+
+def about(request):
+    return render(request, "about.html")
 
 def create_product(request):
     form = ProductForm(request.POST or None)
@@ -35,6 +58,22 @@ def create_product(request):
 
     context = {'form': form}
     return render(request, "create_product.html", context)
+
+def edit_product(request, id):
+    product = Product.objects.get(pk = id)
+    form = ProductForm(request.POST or None, instance=product)
+
+    if form.is_valid() and request.method == "POST":
+        form.save()
+        return HttpResponseRedirect(reverse('main:show_main'))
+
+    context = {'form': form}
+    return render(request, "edit_product.html", context)
+
+def delete_product(request, id):
+    product = Product.objects.get(pk = id)
+    product.delete()
+    return HttpResponseRedirect(reverse('main:show_main'))
 
 def show_xml(request):
     data = Product.objects.all()
@@ -65,20 +104,24 @@ def register(request):
     return render(request, 'register.html', context)
 
 def login_user(request):
-   if request.method == 'POST':
-      form = AuthenticationForm(data=request.POST)
+    if request.method == 'POST':
+        form = AuthenticationForm(data=request.POST)
 
-      if form.is_valid():
+        if form.is_valid():
             user = form.get_user()
             login(request, user)
             response = HttpResponseRedirect(reverse('main:show_main'))
             response.set_cookie('last_login', str(datetime.datetime.now()))
             return response
+        else:
+            messages.error(request, 'Invalid username or password.')  # Tambahkan pesan kesalahan di sini
 
-   else:
-      form = AuthenticationForm(request)
-   context = {'form': form}
-   return render(request, 'login.html', context)
+    else:
+        form = AuthenticationForm(request)
+    
+    context = {'form': form}
+    return render(request, 'login.html', context)
+
 
 def logout_user(request):
     logout(request)
