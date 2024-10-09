@@ -4,6 +4,7 @@
 
 {% block meta %}
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <title>Booktique - Product List</title>
 {% endblock meta %}
 
@@ -15,33 +16,32 @@
     <div class="grid grid-cols-1 gap-6 mb-6">
         {% include "card_info.html" with name=name npm=npm class=class last_login=last_login %}
     </div>
-    
-    
-    <div class="flex flex-col items-center space-y-4 mt-5">
+        <div class="flex flex-col items-center space-y-4 mt-5">
         <a href="{% url 'main:create_product' %}" class="text-white font-bold py-2 px-4 rounded-full transition duration-300 ease-in-out bg-blue-950 hover:bg-slate-900 mx-auto">
             Add New Product
         </a>
         <button data-modal-target="crudModal" data-modal-toggle="crudModal" class="text-white font-bold py-2 px-4 rounded-full transition duration-300 ease-in-out bg-blue-950 hover:bg-slate-900 mx-auto" onclick="showModal();">
             Add New Product by AJAX
         </button>
+        <div class="flex flex-row justify-center items-center text-center space-x-4 mt-4 w-500" id="sortContainer">
+            <div class="flex items-center flex-1 space-x-4">
+                <select id="sortBy" class="py-2 px-4 rounded-full text-center text-blue-950 bg-blue-100 font-semibold w-full">
+                    <option value="" disabled selected>Sort By</option>
+                    <option value="name">Name</option>
+                    <option value="price">Price</option>
+                    <option value="stock_quantity">Stock</option>
+                </select>
+                <button id="orderAsc" class="py-2 px-4 rounded-full text-center text-white bg-blue-950 font-semibold transition duration-300 ease-in-out hover:bg-slate-900 w-100" onclick="setOrder('asc')">
+                    <i class="fas fa-sort-amount-up"></i>
+                </button>
+                <button id="orderDesc" class="py-2 px-4 rounded-full text-center text-white bg-blue-950 font-semibold transition duration-300 ease-in-out hover:bg-slate-900 w-100" onclick="setOrder('desc')">
+                    <i class="fas fa-sort-amount-down"></i>
+                </button>
+            </div>
+        </div> 
+        
     </div>
-    
-    <div class="flex flex-row justify-center space-x-4 mt-4 w-full" id="sortContainer">
-        <select id="sortBy" class="py-2 px-4 rounded-full text-blue-950 bg-blue-100 font-semibold">
-            <option value="" disabled selected>Sort By</option>
-            <option value="name">Name</option>
-            <option value="price">Price</option>
-            <option value="stock_quantity">Stock</option>
-        </select>
-        <select id="order" class="py-2 px-4 rounded-full text-blue-950 bg-blue-100 font-semibold">
-            <option value="" disabled selected>Order</option>
-            <option value="asc">Ascending</option>
-            <option value="desc">Descending</option>
-        </select>
-        <button id="sortButton" class="text-white text-center font-bold py-2 px-4 rounded-full transition duration-300 ease-in-out bg-blue-950 hover:bg-slate-900" disabled onclick="refreshProducts();">
-            Sort
-        </button>
-    </div>
+    <input type="hidden" id="order" value="">
     
     <style>
     @media (max-width: 320px) {
@@ -167,144 +167,172 @@
 </div>
 
 <script>
-    const sortBy = document.getElementById('sortBy');
-    const order = document.getElementById('order');
-    const sortButton = document.getElementById('sortButton');
+// Sorting and filtering variables
+let currentSortBy = '';
+let currentOrder = '';
+let currentSearchQuery = '';
 
-    function checkSortButton() {
-        if (sortBy.value && order.value) {
-            sortButton.disabled = false;
-        } else {
-            sortButton.disabled = true;
-        }
+// Event listeners for sorting and filtering
+document.getElementById('sortBy').addEventListener('change', handleSortChange);
+document.getElementById('orderAsc').addEventListener('click', () => handleOrderChange('asc'));
+document.getElementById('orderDesc').addEventListener('click', () => handleOrderChange('desc'));
+document.getElementById('searchForm').addEventListener('submit', handleSearch);
+
+// Handle sort change
+function handleSortChange(event) {
+    currentSortBy = event.target.value;
+    refreshProducts();
+}
+
+// Handle order change
+function handleOrderChange(order) {
+    currentOrder = order;
+    refreshProducts();
+}
+
+// Handle search
+function handleSearch(event) {
+    event.preventDefault();
+    currentSearchQuery = document.getElementById('searchInput').value.toLowerCase();
+    refreshProducts();
+}
+
+// Fetch products from the server
+async function getProducts() {
+    const response = await fetch("{% url 'main:show_json' %}");
+    return await response.json();
+}
+
+// Refresh products with current sorting and filtering
+async function refreshProducts() {
+    const productsContainer = document.getElementById("product_cards");
+    productsContainer.innerHTML = "";
+    
+    let products = await getProducts();
+    
+    // Apply search filter
+    products = products.filter(product => 
+        product.fields.name.toLowerCase().includes(currentSearchQuery) ||
+        product.fields.author.toLowerCase().includes(currentSearchQuery) ||
+        product.fields.description.toLowerCase().includes(currentSearchQuery)
+    );
+
+    // Apply sorting
+    if (currentSortBy && currentOrder) {
+        products.sort((a, b) => {
+            let fieldA = a.fields[currentSortBy];
+            let fieldB = b.fields[currentSortBy];
+
+            if (currentSortBy === 'price' || currentSortBy === 'stock_quantity') {
+                fieldA = parseFloat(fieldA);
+                fieldB = parseFloat(fieldB);
+            } else {
+                fieldA = fieldA.toLowerCase();
+                fieldB = fieldB.toLowerCase();
+            }
+
+            if (currentOrder === 'asc') {
+                return fieldA > fieldB ? 1 : -1;
+            } else {
+                return fieldA < fieldB ? 1 : -1;
+            }
+        });
     }
 
-    sortBy.addEventListener('change', checkSortButton);
-    order.addEventListener('change', checkSortButton);
-
-    async function getProducts() {
-        try {
-            const response = await fetch("{% url 'main:show_json' %}");
-            const data = await response.json();
-            console.log("Fetched products:", data); // Log data JSON
-            return data;
-        } catch (error) {
-            console.error("Error fetching products:", error);
-            return [];
-        }
+    // Display products or no products message
+    if (products.length === 0) {
+        document.getElementById("no-products").classList.remove("hidden");
+    } else {
+        document.getElementById("no-products").classList.add("hidden");
+        productsContainer.innerHTML = products.map(product => createProductCard(product)).join('');
     }
 
-    document.getElementById('searchForm').addEventListener('submit', async function(event) {
-        event.preventDefault();
-        const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-        await refreshProducts(searchQuery);
-    });
+    updateSortButtonStates();
+}
+
+// HTML for a product card
+function createProductCard(product) {
+    const name = DOMPurify.sanitize(product.fields.name);
+    const author = DOMPurify.sanitize(product.fields.author);
+    const description = DOMPurify.sanitize(product.fields.description);
     
-    async function refreshProducts(searchQuery = '') {
-        console.log("Refreshing products..."); // Log saat fungsi dipanggil
-        document.getElementById("product_cards").innerHTML = "";
-        const products = await getProducts();
-    
-        const sortByValue = sortBy.value;
-        const orderValue = order.value;
-    
-        if (sortByValue && orderValue) {
-            products.sort((a, b) => {
-                let fieldA = a.fields[sortByValue];
-                let fieldB = b.fields[sortByValue];
-    
-                if (sortByValue === 'price' || sortByValue === 'stock_quantity') {
-                    fieldA = parseFloat(fieldA);
-                    fieldB = parseFloat(fieldB);
-                } else {
-                    fieldA = fieldA.toLowerCase();
-                    fieldB = fieldB.toLowerCase();
-                }
-    
-                if (orderValue === 'asc') {
-                    return fieldA > fieldB ? 1 : -1;
-                } else {
-                    return fieldA < fieldB ? 1 : -1;
-                }
-            });
-        }
-    
-        let htmlString = "";
-    
-        const filteredProducts = products.filter(product => 
-            product.fields.name.toLowerCase().includes(searchQuery) ||
-            product.fields.author.toLowerCase().includes(searchQuery) ||
-            product.fields.description.toLowerCase().includes(searchQuery)
-        );
-    
-        if (filteredProducts.length === 0) {
-            // Show the no products message
-            document.getElementById("no-products").classList.remove("hidden");
-        } else {
-            // Hide the no products message
-            document.getElementById("no-products").classList.add("hidden");
-    
-            filteredProducts.forEach(product => {
-                const name = DOMPurify.sanitize(product.fields.name);
-                const author = DOMPurify.sanitize(product.fields.author);
-                const description = DOMPurify.sanitize(product.fields.description);
-                htmlString += `
-                    <div class="relative break-inside-avoid w-full h-full sp-6 animate-fadeIn">
-                        <div class="relative top-5 bg-white shadow-md rounded-2xl mb-6 break-inside-avoid flex flex-col border-2 border-gray-300 transition-transform duration-300 h-full hover:scale-105">
-                            <div class="bg-blue-100 text-gray-800 p-4 rounded-t-2xl border-b-2 border-gray-300 flex flex-col flex-grow">
-                                <h3 class="font-bold text-center text-2xl mb-1">${name}</h3>
-                                <div class="flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
-                                        <path d="M10 3a7 7 0 100 14 7 7 0 000-14zM1 17a9 9 0 0118 0H1z" />
-                                    </svg>
-                                    <p class="text-gray-600 ml-2">${author}</p>
-                                </div>
-                            </div>
-                            <div class="p-4 flex-grow">
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div class="flex flex-col items-center">
-                                        <span class="text-gray-600 text-sm font-bold text-center">Stock</span>
-                                        <span class="inline-block bg-green-200 text-green-800 text-lg font-medium px-2.5 py-0.5 rounded-full flex-grow text-center">
-                                            ${product.fields.stock_quantity}
-                                        </span>
-                                        </div>
-                                    <div class="flex flex-col items-center">
-                                        <span class="text-gray-600 text-sm font-bold text-center">Price</span>
-                                        <span class="inline-block bg-yellow-200 text-yellow-800 text-lg font-medium px-2.5 py-0.5 rounded-full flex-grow text-center">
-                                            $${product.fields.price}
-                                        </span>
-                                        </div>
-                                </div>
-                                <p class="mt-4 text-gray-700 overflow-hidden text-ellipsis" style="max-height: 50px; overflow: hidden;">
-                                    ${description}
-                                </p>
-                                <button type="button" class="mt-4 text-blue-600 hover:underline" onclick="showDescriptionModal(this)" data-name="${product.fields.name}" data-author="${product.fields.author}" data-stock="${product.fields.stock_quantity}" data-price="${product.fields.price}" data-description="${product.fields.description}">
-                                    Show More
-                                    </button>
-                                    </div>
-                                    <div class="flex justify-center p-4 space-x-4 border-t-2 border-gray-300">
-                                <a href="/edit_product/${product.pk}/" class="bg-blue-950 hover:bg-slate-900 text-white rounded-lg p-2 transition duration-300 flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path d="M12.586 2.586a2 2 0 012.828 2.828l-8 8a1 1 0 01-.293.207l-3 1a1 1 0 01-1.207-1.207l1-3a1 1 0 01.207-.293l8-8z" />
-                                    </svg>
-                                    <span class="ml-1">Edit</span>
-                                    </a>
-                                <a href="/delete_product/${product.pk}/" class="bg-red-900 hover:bg-red-950 text-white rounded-lg p-2 transition duration-300 flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M4 4a1 1 0 011-1h10a1 1 0 011 1v1H4V4zM4 6h12v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" clip-rule="evenodd" />
-                                        </svg>
-                                    <span class="ml-1">Delete</span>
-                                    </a>
-                            </div>
+    return `
+        <div class="relative break-inside-avoid w-full h-full sp-6 animate-fadeIn">
+            <div class="relative top-5 bg-white shadow-md rounded-2xl mb-6 break-inside-avoid flex flex-col border-2 border-gray-300 transition-transform duration-300 h-full hover:scale-105">
+                <div class="bg-blue-100 text-gray-800 p-4 rounded-t-2xl border-b-2 border-gray-300 flex flex-col flex-grow">
+                    <h3 class="font-bold text-center text-2xl mb-1">${name}</h3>
+                    <div class="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M10 3a7 7 0 100 14 7 7 0 000-14zM1 17a9 9 0 0118 0H1z" />
+                        </svg>
+                        <p class="text-gray-600 ml-2">${author}</p>
+                    </div>
+                </div>
+                <div class="p-4 flex-grow">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="flex flex-col items-center">
+                            <span class="text-gray-600 text-sm font-bold text-center">Stock</span>
+                            <span class="inline-block bg-green-200 text-green-800 text-lg font-medium px-2.5 py-0.5 rounded-full flex-grow text-center">
+                                ${product.fields.stock_quantity}
+                            </span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <span class="text-gray-600 text-sm font-bold text-center">Price</span>
+                            <span class="inline-block bg-yellow-200 text-yellow-800 text-lg font-medium px-2.5 py-0.5 rounded-full flex-grow text-center">
+                                $${product.fields.price}
+                            </span>
                         </div>
                     </div>
-                    `;
-            });
-        }
-    
-        document.getElementById("product_cards").innerHTML = htmlString;
+                    <p class="mt-4 text-gray-700 overflow-hidden text-ellipsis" style="max-height: 50px; overflow: hidden;">
+                        ${description}
+                    </p>
+                    <button type="button" class="mt-4 text-blue-600 hover:underline" onclick="showDescriptionModal(this)" data-name="${name}" data-author="${author}" data-stock="${product.fields.stock_quantity}" data-price="${product.fields.price}" data-description="${description}">
+                        Show More
+                    </button>
+                </div>
+                <div class="flex justify-center p-4 space-x-4 border-t-2 border-gray-300">
+                    <a href="/edit_product/${product.pk}/" class="bg-blue-950 hover:bg-slate-900 text-white rounded-lg p-2 transition duration-300 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M12.586 2.586a2 2 0 012.828 2.828l-8 8a1 1 0 01-.293.207l-3 1a1 1 0 01-1.207-1.207l1-3a1 1 0 01.207-.293l8-8z" />
+                        </svg>
+                        <span class="ml-1">Edit</span>
+                    </a>
+                    <a href="/delete_product/${product.pk}/" class="bg-red-900 hover:bg-red-950 text-white rounded-lg p-2 transition duration-300 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4 4a1 1 0 011-1h10a1 1 0 011 1v1H4V4zM4 6h12v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="ml-1">Delete</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Update sort button states
+function updateSortButtonStates() {
+    const sortBy = document.getElementById('sortBy');
+    const orderAsc = document.getElementById('orderAsc');
+    const orderDesc = document.getElementById('orderDesc');
+
+    const isSortSelected = sortBy.value !== '';
+    orderAsc.disabled = !isSortSelected;
+    orderDesc.disabled = !isSortSelected;
+
+    orderAsc.classList.toggle('bg-gray-400', !isSortSelected);
+    orderDesc.classList.toggle('bg-gray-400', !isSortSelected);
+
+    if (isSortSelected) {
+        orderAsc.classList.toggle('bg-blue-950', currentOrder === 'asc');
+        orderAsc.classList.toggle('bg-gray-400', currentOrder !== 'asc');
+        orderDesc.classList.toggle('bg-blue-950', currentOrder === 'desc');
+        orderDesc.classList.toggle('bg-gray-400', currentOrder !== 'desc');
     }
-    refreshProducts();
+    orderAsc.innerHTML = '<i class="fas fa-sort-amount-up"></i>';
+    orderDesc.innerHTML = '<i class="fas fa-sort-amount-down"></i>';
+}
+// Initial load
+refreshProducts();
 
     function showDescriptionModal(button) {
         const name = button.dataset.name;
@@ -315,9 +343,9 @@
 
         const modal = document.getElementById("description-modal");
         modal.querySelector("h3").textContent = name;
-        modal.querySelector(".modal-author").textContent = `Author: ${author}`;
-        modal.querySelector(".modal-stock").textContent = `Stock: ${stock}`;
-        modal.querySelector(".modal-price").textContent = `Price: $${price}`;
+        modal.querySelector(".modal-author").textContent = `${author}`;
+        modal.querySelector(".modal-stock").textContent = `${stock}`;
+        modal.querySelector(".modal-price").textContent = `${price}`;
         modal.querySelector(".modal-description").textContent = description;
 
         modal.classList.remove("hidden");
@@ -375,6 +403,8 @@
         return false;
     }
     document.getElementById("submitProduct").onclick = addProduct;
+    document.getElementById('orderAsc').addEventListener('click', () => setOrder('asc'));
+    document.getElementById('orderDesc').addEventListener('click', () => setOrder('desc'));
 
 </script>
     
