@@ -314,7 +314,7 @@ Menurutku, kalau dibandingin XML sama JSON, JSON lebih populer karena lebih simp
 #### 3. Jelaskan fungsi dari method is_valid() pada form Django dan mengapa kita membutuhkan method tersebut?
 `is_valid()` di Django itu buat ngecek apakah data yang diisi di form udah sesuai aturan (validasi) yang kita tentukan. Jadi, sebelum kita proses data form lebih lanjut (seperti disimpan ke database), kita cek dulu pake `is_valid()` buat pastiin tidak ada data yang salah format atau tidak sesuai. Kalau tidak ada validasi ini, bisa-bisa data yang disimpan berantakan, yang tentu bisa bikin error di aplikasi kita.
 #### 4. Mengapa kita membutuhkan csrf_token saat membuat form di Django? Apa yang dapat terjadi jika kita tidak menambahkan csrf_token pada form Django? Bagaimana hal tersebut dapat dimanfaatkan oleh penyerang?
-`csrf_token` penting banget di Django buat ngelindungin aplikasi dari serangan CSRF (Cross-Site Request Forgery). CSRF itu serangan di mana penyerang bisa ngerjain request "jahat" atas nama user tanpa sepengetahuan mereka, misalnya transfer uang atau hapus data penting. Nah, `csrf_token` ini mencegah hal itu dengan nge-verify setiap form submission berasal dari user yang sah (bukan penyerang). Kalau kita nggak pake `csrf_token`, penyerang bisa manfaatin celah ini buat ngejalanin aksi jahat dengan menyamar sebagai user kita. Jadi, token ini semacam pelindung biar aplikasi kita aman dari manipulasi.
+`csrf_token` penting banget di Django buat ngelindungin aplikasi dari serangan CSRF (Cross-Site Request Forgery). CSRF itu serangan di mana penyerang bisa ngerjain request "jahat" atas nama user tanpa sepengetahuan mereka, misalnya transfer uang atau hapus data penting. Nah, `csrf_token` ini mencegah hal itu dengan nge-verify setiap form submission berasal dari user yang sah (bukan penyerang). Kalau kita tidak pake `csrf_token`, penyerang bisa manfaatin celah ini buat ngejalanin aksi jahat dengan menyamar sebagai user kita. Jadi, token ini semacam pelindung biar aplikasi kita aman dari manipulasi.
 
 #### 5. Langkah-langkah implementasi form 
 1. Sebelum membuat form, pastikan model ```Product``` menggunakan UUID sebagai primary key untuk menggantikan primary key berupa integer yang secara default auto-increment. Lalu, run ```python manage.py makemigrations``` dan ```python manage.py migrate```.
@@ -1610,7 +1610,190 @@ tailwind:
           
       {% endblock content %}
       ```
+## Tugas 6
 
+### Manfaat JavaScript dalam Pengembangan Aplikasi Web
+
+JavaScript punya banyak manfaat yang penting dalam pengembangan aplikasi web, di antaranya:
+
+1. **Interaktivitas**: JavaScript bikin halaman web jadi lebih interaktif, kayak menambahkan animasi, form yang dinamis, atau meng-update konten tanpa perlu reload halaman.
+
+2. **Manipulasi DOM**: Dengan JavaScript, developer bisa ngubah struktur, style, atau konten halaman web secara langsung tanpa refresh halaman.
+
+3. **Pemrograman Asinkron**: JavaScript mendukung proses asinkron, jadi aplikasi web bisa tetap jalan meski ada proses yang butuh waktu lama tanpa nge-lag.
+
+4. **Single Page Applications (SPA)**: JavaScript memungkinkan pembuatan SPA yang bikin pengalaman pengguna jadi lebih mulus, tanpa harus loading halaman baru setiap klik.
+
+5. **Pemrograman Server-side**: Dengan Node.js, JavaScript bisa dipakai untuk backend juga, jadi bisa dipakai buat full-stack development dengan satu bahasa.
+
+6. **Ekosistem yang Kaya**: JavaScript punya banyak library dan framework kayak React, Vue, dan Angular, yang bisa mempercepat proses pengembangan.
+
+### Fungsi `await` dengan `fetch()`
+
+`await` adalah kata kunci di JavaScript yang dipakai di dalam fungsi asinkron buat nunggu sebuah promise selesai sebelum lanjut eksekusi kode. Kalau dipakai bareng `fetch()`:
+
+1. **Dengan `await`**:
+   ```javascript
+   const response = await fetch(url);
+   const data = await response.json();
+   console.log(data);
+   ```
+   Di sini, kode bakal nunggu sampai `fetch()` ngasih data sebelum lanjut ke baris selanjutnya.
+
+2. **Tanpa `await`**:
+   ```javascript
+   const responsePromise = fetch(url);
+   console.log(responsePromise); // Ini bakal print Promise object, bukan data
+   ```
+   Kodenya langsung lanjut, tidak nunggu hasil dari `fetch()`, jadi data belum bisa langsung diakses.
+
+Kalau tidak pake `await`, harus pakai `.then()` buat nangani promise, yang kadang bikin kode jadi lebih susah dibaca kalau ada banyak proses asinkron.
+
+### Penggunaan Decorator `csrf_exempt`
+
+Decorator `csrf_exempt` di Django dipakai di view yang nerima AJAX POST request karena berikut ini.
+
+1. **CSRF Protection**: Django defaultnya aktifin proteksi CSRF (Cross-Site Request Forgery) buat semua POST request.
+
+2. **AJAX Requests**: Request AJAX seringkali tidak ngirim token CSRF yang biasanya ada di form HTML.
+
+3. **Exemption**: `csrf_exempt` bikin view tertentu bisa nerima POST request tanpa token CSRF.
+
+4. **Endpoint API**: Sering dipakai di endpoint API yang diakses client yang mungkin tidak punya token CSRF.
+
+Tapi hati-hati pakai `csrf_exempt` karena ini ngilangin satu lapisan keamanan. Pastikan ada autentikasi dan otorisasi yang kuat di tempat lain.
+
+### Kenapa Backend Tetap Harus Bersihin Data Input
+
+Bersihin data input di backend, kayak pakai `strip_tags`, tetep harus dilakukan meskipun sudah ada validasi di frontend karena berikut ini.
+
+1. **Keamanan Berlapis**: Validasi di frontend bisa di-bypass, jadi validasi backend adalah pertahanan terakhir.
+
+2. **Konsistensi Data**: Backend pastiin semua data yang masuk ke database udah bersih dan konsisten.
+
+3. **Langsung Ke Backend**: Request bisa dikirim langsung ke backend tanpa lewat frontend, jadi backend tetep harus validasi.
+
+4. **Validasi Ganda**: Validasi di frontend dan backend bisa beda implementasinya, jadi ini nambah lapisan keamanan.
+
+5. **Perubahan Aturan**: Kalau aturan validasi berubah, lebih mudah update di backend daripada di frontend setiap client.
+
+Jadi, meskipun validasi frontend penting buat UX, validasi backend tetap krusial buat keamanan dan integritas data.
+
+### Langkah-langkah
+1. Membuat fungsi `add_product_ajax` untuk membuat product dengan AJAX. Lalu routing ke vuews.py seperti biasa.
+
+   ```python
+   @csrf_exempt
+   @require_POST
+   def add_product_ajax(request):
+       name = strip_tags(request.POST.get('name'))
+       author = strip_tags(request.POST.get('author'))
+       description = strip_tags(request.POST.get('description'))
+       stock_quantity = request.POST.get('stock_quantity')
+       price = request.POST.get('price')
+       user = request.user
+   
+       new_product = Product(name=name, author=author, description=description, stock_quantity=stock_quantity, price=price, user=user)
+       new_product.save()
+   
+       return HttpResponse(b"CREATED", status=201)
+   ```
+2. Menambahkan variable data untuk mendapatkan objek-objek product dari endpoint json oad fungsi show_xml dan show_json di views.py. Pengambilan objek selain menggunakan ini sebelumnya dihapus.
+   ```python
+   data = Product.objects.filter(user=request.user)
+   ```
+3. Tambahkan ini pada main.html untuk menampilkan product menggunakan fetch API nanti.
+   ```python
+   <!-- product card -->
+       <div id="product_cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+   
+       <div id="no-products" class="hidden flex flex-col items-center justify-center mt-6">
+           <img src="{% static 'image/sedih-banget.png' %}" alt="Sad face" class="w-24 h-24 mb-2"/>
+           <p>No products available in Booktique :[ </p>
+       </div>
+   ```
+   implement fetch:
+   ```python
+   // Fetch products from the server
+   function getProducts() {
+       return fetch("{% url 'main:show_json' %}")
+           .then((response) => response.json());
+   }
+   ```
+4. Menambahkan fungsi `refreshProduct` untuk refresh pada halaman utama secara asinkronus untuk menampilkan daftar product terbaru tanpa reload halaman utama. Di sini saya menambahkan search filter dan sorting.
+   ```python
+   async function refreshProducts() {
+       const productsContainer = document.getElementById("product_cards");
+       productsContainer.innerHTML = "";
+       
+       let products = await getProducts();
+       
+       // Apply search filter
+       products = products.filter(product => 
+           product.fields.name.toLowerCase().includes(currentSearchQuery) ||
+           product.fields.author.toLowerCase().includes(currentSearchQuery) ||
+           product.fields.description.toLowerCase().includes(currentSearchQuery)
+       );
+   
+       // Apply sorting
+       if (currentSortBy && currentOrder) {
+           products.sort((a, b) => {
+               let fieldA = a.fields[currentSortBy];
+               let fieldB = b.fields[currentSortBy];
+   
+               if (currentSortBy === 'price' || currentSortBy === 'stock_quantity') {
+                   fieldA = parseFloat(fieldA);
+                   fieldB = parseFloat(fieldB);
+               } else {
+                   fieldA = fieldA.toLowerCase();
+                   fieldB = fieldB.toLowerCase();
+               }
+   
+               if (currentOrder === 'asc') {
+                   return fieldA > fieldB ? 1 : -1;
+               } else {
+                   return fieldA < fieldB ? 1 : -1;
+               }
+           });
+       }
+   
+       // Display products or no products message
+       if (products.length === 0) {
+           document.getElementById("no-products").classList.remove("hidden");
+       } else {
+           document.getElementById("no-products").classList.add("hidden");
+           productsContainer.innerHTML = products.map(product => createProductCard(product)).join('');
+       }
+   
+       updateSortButtonStates();
+   }
+   ```
+   note:
+   `createProductCard` adalah fungsi untuk menyambungkan html yang sesuai. `updateSortButtonStates()` fungsi untuk handle state toggle button untuk sort.
+
+5. Membuat modal-modal untuk form add product ajax dan detail product yang diintegrasikan dengan fungsi javascript yang berkesesuaian.
+6. Membuat fungsi untuk menambahkan data secara AJAX.
+   ```python
+   function addProduct() {
+           fetch("{% url 'main:add_product_ajax' %}", {
+           method: "POST",
+           body: new FormData(document.querySelector('#productForm')),
+           })
+           .then(response => refreshProducts())
+   
+           document.getElementById("productForm").reset(); 
+           document.querySelector("[data-modal-toggle='crudModal']").click();
+   
+           return false;
+       }
+   ```
+7. Menambahkan event listener yang dibutuhkan.
+8. Untuk menutup celah XSS di aplikasi, saya menambahkan hal berikut
+   1. **Membersihkan Input dengan `strip_tags`:**
+      - Tambahkan `strip_tags` dari `django.utils.html` di **views.py** dan **forms.py**.
+   
+   2. **Membersihkan Data di Frontend dengan DOMPurify:**
+      - Tambahkan **DOMPurify** di **main.html**.
    
 
    
