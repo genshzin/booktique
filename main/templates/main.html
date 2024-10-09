@@ -198,9 +198,9 @@ function handleSearch(event) {
 }
 
 // Fetch products from the server
-async function getProducts() {
-    const response = await fetch("{% url 'main:show_json' %}");
-    return await response.json();
+function getProducts() {
+    return fetch("{% url 'main:show_json' %}")
+        .then((response) => response.json());
 }
 
 // Refresh products with current sorting and filtering
