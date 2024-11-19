@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-g^1@g)+yib4&d7o(4$lcljv_p2@ok81!k-9ed^luzt4a7@hp#n
 PRODUCTION = os.getenv("PRODUCTION", False)
 DEBUG = not PRODUCTION
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "nasha-zahira-booktique.pbp.cs.ui.ac.id"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "nasha-zahira-booktique.pbp.cs.ui.ac.id", "10.0.2.2"]
 
 
 # Application definition
@@ -38,10 +38,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'main'
+    'main',
+    'authentication',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -131,4 +134,12 @@ else:
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CSRF_TRUSTED_ORIGINS = ["http://localhost","http://127.0.0.1","http://nasha-zahira-booktique.pbp.cs.ui.ac.id/", "https://nasha-zahira-booktique.pbp.cs.ui.ac.id/"]
+CSRF_TRUSTED_ORIGINS = ["http://localhost","http://127.0.0.1","http://10.0.2.2", "http://nasha-zahira-booktique.pbp.cs.ui.ac.id/", "https://nasha-zahira-booktique.pbp.cs.ui.ac.id/, "]
+
+
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SAMESITE = 'None'

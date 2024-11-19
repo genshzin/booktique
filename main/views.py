@@ -1,5 +1,6 @@
 import datetime
-from django.http import HttpResponse, HttpResponseRedirect
+import json
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.core import serializers
 from django.shortcuts import render, redirect
 from main.models import Product
@@ -94,7 +95,7 @@ def login_user(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            response = HttpResponseRedirect(reverse('main:show_main'))
+            response = HttpResponseRedirect(reverse('main:about'))
             response.set_cookie('last_login', str(datetime.datetime.now()))
             return response
         else:
@@ -128,7 +129,70 @@ def add_product_ajax(request):
 
     return HttpResponse(b"CREATED", status=201)
 
+@csrf_exempt
+def create_product_flutter(request):
+    if request.method == 'POST':
 
+        data = json.loads(request.body)
+        new_mood = Product.objects.create(
+            user=request.user,
+            name=data['name'],
+            author=data['author'],
+            description=data['description'],
+            stock_quantity=data['stock_quantity'],
+            price=data['price'],
+        )
 
+        new_mood.save()
+
+        return JsonResponse({"status": "success"}, status=200)
+    else:
+        return JsonResponse({"status": "error"}, status=401)
+
+@csrf_exempt
+def delete_product_flutter(request, id):
+    if request.method == 'GET':  # Changed from checking POST
+        try:
+            product = Product.objects.get(pk=id)
+            product.delete()
+            return JsonResponse({"status": "success"}, status=200)
+        except Product.DoesNotExist:
+            return JsonResponse(
+                {"status": "error", "message": "Product not found"}, 
+                status=404
+            )
+        except Exception as e:
+            return JsonResponse(
+                {"status": "error", "message": str(e)}, 
+                status=500
+            )
+    
+    return JsonResponse(
+        {"status": "error", "message": "Invalid method"}, 
+        status=405
+    )
+
+@csrf_exempt
+def edit_product_flutter(request, id):
+    if request.method == 'POST':
+        try:
+            product = Product.objects.get(pk=id)
+            data = json.loads(request.body)
+            
+            # Update fields
+            product.name = data['name']
+            product.author = data['author']
+            product.description = data['description']
+            product.stock_quantity = int(data['stock_quantity'])
+            product.price = int(data['price'])
+            
+            product.save()
+            return JsonResponse({"status": "success"}, status=200)
+        except Product.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "Product not found"}, status=404)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+    
+    return JsonResponse({"status": "error", "message": "Invalid method"}, status=405)
 
    
